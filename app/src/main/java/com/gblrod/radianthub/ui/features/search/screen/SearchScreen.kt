@@ -33,6 +33,7 @@ import com.gblrod.radianthub.navigation.extensions.navigateToTopLevelFromSearch
 import com.gblrod.radianthub.ui.features.search.components.EmptySearchResult
 import com.gblrod.radianthub.ui.features.search.components.SearchField
 import com.gblrod.radianthub.ui.features.search.components.SearchResultItem
+import com.gblrod.radianthub.ui.features.search.components.filterSearchResults
 import com.gblrod.radianthub.ui.features.search.model.SearchFilterType
 import com.gblrod.radianthub.ui.features.search.model.SearchType
 import com.gblrod.radianthub.ui.features.search.state.SearchUiState
@@ -112,13 +113,10 @@ fun SearchScreen(
                 }
 
                 is SearchUiState.Success -> {
-                    val filteredResults = when (selectedFilter) {
-                        SearchFilterType.ALL -> state.results
-                        SearchFilterType.AGENTS -> state.results.filter { it.type == SearchType.AGENT }
-                        SearchFilterType.MAPS -> state.results.filter { it.type == SearchType.MAP }
-                        SearchFilterType.CARDS -> state.results.filter { it.type == SearchType.CARD }
-                        SearchFilterType.TIERS -> state.results.filter { it.type == SearchType.TIER }
-                    }
+                    val filteredResults = filterSearchResults(
+                        results = state.results,
+                        selectedFilter = selectedFilter
+                    )
 
                     if (filteredResults.isEmpty()) {
                         EmptySearchResult(query = state.query)
