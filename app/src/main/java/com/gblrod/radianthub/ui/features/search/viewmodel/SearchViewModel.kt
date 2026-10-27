@@ -71,19 +71,15 @@ class SearchViewModel(
 
     private fun loadItems() {
         viewModelScope.launch {
-            val currentQuery = when (val state = _searchState.value) {
-                is SearchUiState.Loading -> state.query
-                is SearchUiState.Success -> state.query
-                is SearchUiState.Error -> state.query
-            }
+            val initialQuery = getCurrentQuery()
 
-            _searchState.value = SearchUiState.Loading(query = currentQuery)
+            _searchState.value = SearchUiState.Loading(query = initialQuery)
 
             safeApiCall(
                 onHttpError = { code ->
                     _searchState.value =
                         SearchUiState.Error(
-                            query = currentQuery,
+                            query = getCurrentQuery(),
                             messageResId = R.string.ui_state_http_exception,
                             code = code
                         )
@@ -91,14 +87,14 @@ class SearchViewModel(
                 onIoError = {
                     _searchState.value =
                         SearchUiState.Error(
-                            query = currentQuery,
+                            query = getCurrentQuery(),
                             messageResId = R.string.ui_state_io_exception
                         )
                 },
                 onGenericError = {
                     _searchState.value =
                         SearchUiState.Error(
-                            query = currentQuery,
+                            query = getCurrentQuery(),
                             messageResId = R.string.ui_state_generic_error
                         )
                 }
@@ -164,18 +160,19 @@ class SearchViewModel(
 
                     allItems = agentsItems + mapsItems + cardsItems + tiersItems
 
+                    val latestQuery = getCurrentQuery()
+
                     val filteredItems = allItems.filter { item ->
                         item.title.contains(
-                            other = currentQuery,
+                            other = latestQuery,
                             ignoreCase = true
                         )
                     }
 
-                    _searchState.value =
-                        SearchUiState.Success(
-                            query = currentQuery,
-                            results = filteredItems
-                        )
+                    _searchState.value = SearchUiState.Success(
+                        query = latestQuery,
+                        results = filteredItems
+                    )
                 }
             }
         }
@@ -184,4 +181,11 @@ class SearchViewModel(
     fun retry() {
         retryManager.retry()
     }
+
+    private fun getCurrentQuery(): String =
+        when (val state = _searchState.value) {
+            is SearchUiState.Loading -> state.query
+            is SearchUiState.Error -> state.query
+            is SearchUiState.Success -> state.query
+        }
 }
